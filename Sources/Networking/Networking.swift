@@ -91,6 +91,36 @@ public actor NetworkClient {
     }
 }
 
+extension NetworkClient {
+
+    public func request(
+        urlString: String,
+        method: HTTPMethod,
+        headers: [String: String],
+        body: Data
+    ) async throws {
+
+        guard let url = URL(string: urlString) else {
+            throw NetworkError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = method.rawValue
+        request.httpBody = body
+
+        headers.forEach {
+            request.setValue($0.value, forHTTPHeaderField: $0.key)
+        }
+
+        let (_, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            throw NetworkError.invalidResponse
+        }
+    }
+}
+
 
 
 
